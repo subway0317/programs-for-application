@@ -23,8 +23,8 @@ def get_stock_data(stock_code, start_date, end_date):
     stock_df['return rate'] = stock_df['收盘'].pct_change()
     return stock_df.dropna()
 return_dict={}
-#creating a ExceLWriter 
-writer = pd.ExceLWriter('stock_data.xLsx', engine='xLswriter')
+#creating a ExcelWriter 
+writer = pd.ExcelWriter('stock_data.xLsx', engine='xLswriter')
 for code in code_list:
     try:
         return_dict[code]=get_stock_data(stock_code=code, start_date=start_date, end_date=end_date)[['date', 'close', 'return rate']].set_index('date')
