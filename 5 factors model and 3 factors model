@@ -1,4 +1,4 @@
-#Fama French 5 Factors Model, focusing on Chinese A stock market, the source of 5 factors' data is cufe.edu.cn 
+#Realization of Fama French 5 Factors Model and 3 Factors Model, focusing on Chinese A stock market, and the source of the factors' data is cufe.edu.cn 
 import pandas as pd
 import numpy as np
 import statsmodels.api as sm
