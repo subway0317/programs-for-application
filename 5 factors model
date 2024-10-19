@@ -1,0 +1,121 @@
+#Fama French 5 Factors Model, focusing on Chinese A stock market, the source of 5 factors' data is cufe.edu.cn 
+import pandas as pd
+import numpy as np
+import statsmodels.api as sm
+import seaborn as sns
+import akshare as ak
+#allowing Chinese chararcters
+plt.rcParams ['font.sans-serif'] ='SimHei' 
+#allowing to demonstrate the 'minus'
+plt.rcParams ['axes.unicode_minus']=False
+code_name={'NVDA': 'Nvidia', 'TSLA': 'Tesla', 'AAPL': 'Apple', 'NFLX': 'Netfl1x', 
+           'MSFT': 'Microsoft', 'META': 'Meta', 'AMZN': 'Amazon', 'MSTR': 'Microstrategy', 
+           'PDD': 'PDD Holdings', 'GOOGL': 'Google alphabet', 'AMD': 'Advanced Micro Devices'}
+def get_stock_data(stock_code, start_date, end_date):
+"""
+:param stockcode: code of the stock, like '000001'
+:param startdate: the beginning date of the data, in form 'YYYYMMDD'
+:param enddate: the ending date of the data, in form 'YYYYMMDD'
+:return: the data of stocks traded in determined period
+"""
+stock_df = ak.stock_zh_a_hist(symbol=stock_code, period='daily', start_date=start_date.replace('-',''), end_date=end_date.replace('-',''), adjust="qfq")
+stock_df['return rate'] = stock_df['收盘'].pct_change()
+return stock_df.dropna()
+return_dict={}
+#creating a ExceLWriter 
+writer = pd.ExceLWriter('stock_data.xLsx', engine='xLswriter)
+for code in code_list:
+    try:
+        return_dict[code]=get_stock_data(stock_code=code, start_date=start_date, end_date=end_date)[['date', 'close', 'return rate']].set_index('date')
+        get_stock_data(stock_code=code, start_date='20230801', end_date='20240801').to_excel(writer, sheet_name=code)
+    except:
+        pass
+writer.save()
+writer.close()
+"""
+catching the factors, where 'trddy'is the date of trading, 
+'mkt_rf' is the market risk factor, 'smb' is the size factor (Small minus Big),
+'hml' is the value factor (High minus Low), 'rf' is the risk-free interest,
+'rmw' is the profitability factor (Robust minus Weak), and 'cma' is the investment facotr(Conservative minus Aggressive)
+"""
+five_factors=pd.read_csv('fivefactor_daily.csv')[['trddy', 'mkt_rf', 'smb', 'hml', 'rmw', 'cma']].rename(columns={'trddy':'date'})
+five_factors=five_factors.loc['2023-08-01':'2024-07-31',:]
+five_factors.index=pd.to_datetime(five_factors.index)
+#demonstrating the first 5 lines data
+five_factors.head()
+#defining sum return ratio, max drawdown, sharpe ratio and information ratio
+def sum_return_ratio(price_list):
+    price_list=price_list.to_numpy()
+    return (price_list[-1]-price_list[0])/price_list[0]
+def MaxDrawdown(price_list):
+    i = np.argmax((np.maximum.accumulate(price_list) - price_list) / np.maximum.accumulate(price_list))  # 结束位置
+    if i == 0:
+        return 0
+    j = np.argmax(price_list[:i])  
+    return (price_list[j] - price_list[i]) / (price_list[j])
+def sharpe_ratio(price_list,rf=0.000041):
+    daily_return = price_list.pct_change()
+    return daily_return.mean()-rf/ daily_return.std()
+def Information_Ratio(price_list,rf=0.000041):
+    chaoer=sum_return_ratio(price_list)-((1+rf)**365-1)
+    return chaoer/np.std(price_list.pct_change()-rf)
+# dealing with 3 factors model(CAPM)
+def deal(code='',mode='3 factors'): 
+    day_return = return_dict[code]
+    day_return.index=pd.to_datetime(day_return.index)
+    sum_return_ratio=sum_return_ratio(day_return['收盘'])
+    MaxDrawdown=MaxDrawdown(day_return['收盘'])
+    sharpe_ratio=sharpe_ratio(day_return['收盘'])
+    Information_Ratio=Information_Ratio(day_return['收盘'])
+    zgpa_threefactor = pd.merge(three_factors, day_return,left_index=True, right_index=True)    
+    if mode=='5 factors':
+
+        result = sm.OLS(zgpa_threefactor['return rate'], sm.add_constant(zgpa_threefactor.loc[:,['mkt_rf','smb','hml','rmw','cma']])).fit()
+        betas=result.params
+        return pd.DataFrame({'Alpha':betas[0],'MKT':betas[1],'SMB':betas[2],'HML':betas[3],'RMW':betas[4],'CMA':betas[5],
+                        'sum_return_ratio':sum_return_ratio, 'MaxDrawdown': MaxDrawdown,'sharpe_ratio':sharpe_ratio, 'Information_Ratio': Information_Ratio,'code of stock':code},index=[0])
+    else:
+        #zgpa_threefactor = pd.merge(three_factors, day_return,left_index=True, right_index=True)
+        result = sm.OLS(zgpa_threefactor['收益率'], sm.add_constant(zgpa_threefactor.loc[:,['mkt_rf','smb','hml']])).fit()
+        betas=result.params
+        return pd.DataFrame({'Alpha':betas[0],'MKT':betas[1],'SMB':betas[2],'HML':betas[3],
+                        'sum_return_ratio':sum_return_ratio, 'MaxDrawdown': MaxDrawdown, 'sharpe_ratio':sharpe_ratio, 'Information_Ratio': Information_Ratio,'code of stock':code},index=[0])
+df_results=pd.DataFrame()
+for code,df_one in return_dict.items():
+    result=deal(code=code) ;  result['stock_name']=code_name[code]
+    df_results=pd.concat([df_results,result],axis=0,ignore_index=True)
+# selecting stocks with top 10 alpha to visualization 
+df_results=df_results[['code of stock', 'stock_name','Alpha', 'MKT', 'SMB', 'HML', 'RMW','CMA','sum_return_ratio', 'MaxDrawdown', 'sharpe_ratio', 'Information_Ratio']].sort_values(by='Alpha',ascending=False)
+df_results
+plt.figure(figsize=(10, 8),dpi=128)
+for i, column in enumerate(['Alpha', 'MKT', 'SMB', 'HML', 'sum_return_ratio', 'MaxDrawdown', 'sharpe_ratio', 'Information_Ratio'], 1):
+    plt.subplot(4, 2, i)
+    plt.bar(df_results.head(10)['stock_name'], df_results.head(10)[column], color='skyblue')
+    plt.title(column)
+    plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+### saving the result
+df_results.to_csv('3 factors results.csv',index=False)
+
+
+# dealing with 5 factors model
+df_results=pd.DataFrame()
+for code,df_one in return_dict.items():
+    result=deal(code=code,mode='5 factors') ;  result['stock_name']=code_name[code]
+    df_results=pd.concat([df_results,result],axis=0,ignore_index=True)
+df_results=df_results[['code of stock', 'stock_name','Alpha', 'MKT', 'SMB', 'HML', 'RMW','CMA','sum_return_ratio', 'MaxDrawdown', 'sharpe_ratio', 'Information_Ratio']].sort_values(by='Alpha',ascending=False)
+df_results
+plt.figure(figsize=(10,10),dpi=128)
+for i, column in enumerate(['Alpha', 'MKT', 'SMB', 'HML', 'RMW','CMA', 'sum_return_ratio', ''MaxDrawdown', 'sharpe_ratio', 'Information_Ratio'], 1):
+    plt.subplot(5, 2, i)
+    plt.bar(df_results.head(10)['stock_name'], df_results.head(10)[column], color='skyblue')
+    plt.title(column)
+    plt.xticks(rotation=45)  
+plt.tight_layout()
+plt.show()
+### saving the result
+df_results.to_csv('5 factors results.csv',index=False)
+
+
+ 
