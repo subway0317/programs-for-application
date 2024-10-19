@@ -18,9 +18,9 @@ def get_stock_data(stock_code, start_date, end_date):
     :param enddate: the ending date of the data, in form 'YYYYMMDD'
     :return: the data of stocks traded in determined period
     """
-stock_df = ak.stock_zh_a_hist(symbol=stock_code, period='daily', start_date=start_date.replace('-',''), end_date=end_date.replace('-',''), adjust="qfq")
-stock_df['return rate'] = stock_df['收盘'].pct_change()
-return stock_df.dropna()
+    stock_df = ak.stock_zh_a_hist(symbol=stock_code, period='daily', start_date=start_date.replace('-',''), end_date=end_date.replace('-',''), adjust="qfq")
+    stock_df['return rate'] = stock_df['收盘'].pct_change()
+    return stock_df.dropna()
 return_dict={}
 #creating a ExceLWriter 
 writer = pd.ExceLWriter('stock_data.xLsx', engine='xLswriter')
