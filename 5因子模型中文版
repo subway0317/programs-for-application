@@ -1,0 +1,208 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt 
+import seaborn as sns
+import statsmodels.api as sm
+plt.rcParams ['font.sans-serif'] ='SimHei'               #显示中文
+plt.rcParams ['axes.unicode_minus']=False               #显示负号
+
+
+# ### 股票代码
+
+
+
+
+code_name={"600100": "同方股份","600626": "申达股份","000630": "铜陵有色","000850": "华茂股份",
+  "600368": "五洲交通","603766": "隆鑫通用","600105": "永鼎股份","600603": "广汇物流",
+  "002344": "海宁皮城","000407": "胜利股份","000883": "湖北能源"}
+code_list=list(code_name.keys())
+start_date='2023-04-01'  ;  end_date='2024-03-31'
+
+
+ ### 获取这些股票的交易数据
+
+
+
+
+import akshare as ak
+# 定义获取A股历史交易数据的函数
+def get_stock_data(stock_code, start_date, end_date):
+    """
+    :param stock_code: 股票代码，如 '000001'
+    :param start_date: 开始日期，格式为 'YYYYMMDD'
+    :param end_date: 结束日期，格式为 'YYYYMMDD'
+    :return: 指定时间段内的股票交易数据(DataFrame)
+    """
+    # 使用 AkShare 的 stock_zh_a_hist 接口获取数据
+    stock_df = ak.stock_zh_a_hist(symbol=stock_code, period="daily", start_date=start_date.replace('-',''), end_date=end_date.replace('-',''), adjust="qfq")
+    stock_df['收益率'] = stock_df['收盘'].pct_change() 
+    return stock_df.dropna()
+
+
+# In[4]:
+
+
+return_dict={}
+#创建一个 ExcelWriter 对象
+#writer = pd.ExcelWriter('股票数据.xlsx', engine='xlsxwriter')
+for code in code_list:
+    try:
+        return_dict[code]=get_stock_data(stock_code=code,start_date=start_date,end_date=end_date)[['日期','收盘','收益率']].set_index('日期')
+        #get_stock_data(stock_code=code,start_date='20230201',end_date='20240201').to_excel(writer, sheet_name=code)
+    except:
+        pass
+
+#writer.save()
+#writer.close()
+
+
+
+
+
+return_dict['600368'].head()
+
+
+### 三因子模型
+
+
+
+
+#读取因子数据
+three_factors=pd.read_csv('fivefactor_daily.csv')[['trddy','mkt_rf','smb','hml','rmw','cma']].rename(columns={'trddy':'日期'}).set_index('日期')
+three_factors=three_factors.loc['2023-04-01':'2024-03-31',:]
+three_factors.index=pd.to_datetime(three_factors.index)
+three_factors.head(3)
+
+
+# - trddy:交易日期
+# - mkt_rf: 市场风险因子
+# - smb :规模风险因子
+# - hml :账面市值比风险因子
+# - rf :无风险利率
+# - rmw:盈利能力因子 更高盈利能力的公司通常预示更健康的财务状况和更低的风险。
+# - cma:投资风格因子]
+
+
+
+def sum_return_ratio(price_list):
+    '''实际总收益率'''
+    price_list=price_list.to_numpy()
+    return (price_list[-1]-price_list[0])/price_list[0]
+def MaxDrawdown(price_list):
+    '''最大回撤率'''
+    i = np.argmax((np.maximum.accumulate(price_list) - price_list) / np.maximum.accumulate(price_list))  # 结束位置
+    if i == 0:
+        return 0
+    j = np.argmax(price_list[:i])  # 开始位置
+    return (price_list[j] - price_list[i]) / (price_list[j])
+def sharpe_ratio(price_list,rf=0.000041):
+    '''夏普比率'''
+    #公式 夏普率 = (回报率均值 - 无风险率) / 回报率的标准差
+    # pct_change()是pandas里面的自带的计算每日增长率的函数
+    daily_return = price_list.pct_change()
+    return daily_return.mean()-rf/ daily_return.std()
+def Information_Ratio(price_list,rf=0.000041):
+    '''信息比率'''
+    chaoer=sum_return_ratio(price_list)-((1+rf)**365-1)
+    return chaoer/np.std(price_list.pct_change()-rf)
+
+
+
+
+
+def deal(code='',mode='三因子'): 
+    day_return = return_dict[code]
+    day_return.index=pd.to_datetime(day_return.index)
+    实际总收益率=sum_return_ratio(day_return['收盘'])
+    最大回测率=MaxDrawdown(day_return['收盘'])
+    夏普比率=sharpe_ratio(day_return['收盘'])
+    信息比率=Information_Ratio(day_return['收盘'])
+    zgpa_threefactor = pd.merge(three_factors, day_return,left_index=True, right_index=True)    
+    if mode=='五因子':
+
+        result = sm.OLS(zgpa_threefactor['收益率'], sm.add_constant(zgpa_threefactor.loc[:,['mkt_rf','smb','hml','rmw','cma']])).fit()
+        betas=result.params
+        return pd.DataFrame({'阿尔法':betas[0],'市场风险因子MKT':betas[1],'市值因子SMB':betas[2],'账面市值因子HML':betas[3],'盈利能力因子RMW':betas[4],'投资风格因子CMA':betas[5],
+                        '实际总收益率':实际总收益率,'最大回测率':最大回测率,'夏普比率':夏普比率,'信息比率':信息比率,'股票代码':code},index=[0])
+    else:
+        #zgpa_threefactor = pd.merge(three_factors, day_return,left_index=True, right_index=True)
+        result = sm.OLS(zgpa_threefactor['收益率'], sm.add_constant(zgpa_threefactor.loc[:,['mkt_rf','smb','hml']])).fit()
+        betas=result.params
+        return pd.DataFrame({'阿尔法':betas[0],'市场风险因子MKT':betas[1],'市值因子SMB':betas[2],'账面市值因子HML':betas[3],
+                        '实际总收益率':实际总收益率,'最大回测率':最大回测率,'夏普比率':夏普比率,'信息比率':信息比率,'股票代码':code},index=[0])
+
+
+
+
+
+df_results=pd.DataFrame()
+for code,df_one in return_dict.items():
+    result=deal(code=code) ;  result['股票名称']=code_name[code]
+    df_results=pd.concat([df_results,result],axis=0,ignore_index=True)
+
+
+ ### 选出阿尔法前十的股票 来分析画图
+
+
+
+df_results=df_results[['股票代码', '股票名称','阿尔法', '市场风险因子MKT', '市值因子SMB', '账面市值因子HML', '实际总收益率', '最大回测率', '夏普比率', '信息比率']].sort_values(by='阿尔法',ascending=False)
+df_results
+
+
+
+
+plt.figure(figsize=(10, 8),dpi=128)
+
+# 创建多子图布局
+for i, column in enumerate(['阿尔法', '市场风险因子MKT', '市值因子SMB', '账面市值因子HML', '实际总收益率', '最大回测率', '夏普比率', '信息比率'], 1):
+    plt.subplot(4, 2, i)
+    plt.bar(df_results.head(10)['股票名称'], df_results.head(10)[column], color='skyblue')
+    plt.title(column)
+    plt.xticks(rotation=45)  # 旋转标签，避免重叠
+
+# 调整布局
+plt.tight_layout()
+plt.show()
+
+
+
+
+
+### 储存结果
+df_results.to_csv('三因子结果.csv',index=False)
+
+
+# ### 五因子
+
+
+
+
+df_results=pd.DataFrame()
+for code,df_one in return_dict.items():
+    result=deal(code=code,mode='五因子') ;  result['股票名称']=code_name[code]
+    df_results=pd.concat([df_results,result],axis=0,ignore_index=True)
+
+
+df_results=df_results[['股票代码', '股票名称','阿尔法', '市场风险因子MKT', '市值因子SMB', '账面市值因子HML', '盈利能力因子RMW','投资风格因子CMA','实际总收益率', '最大回测率', '夏普比率', '信息比率']].sort_values(by='阿尔法',ascending=False)
+df_results
+
+
+
+
+
+plt.figure(figsize=(10,10),dpi=128)
+
+# 创建多子图布局
+for i, column in enumerate(['阿尔法', '市场风险因子MKT', '市值因子SMB', '账面市值因子HML', '盈利能力因子RMW','投资风格因子CMA', '实际总收益率', '最大回测率', '夏普比率', '信息比率'], 1):
+    plt.subplot(5, 2, i)
+    plt.bar(df_results.head(10)['股票名称'], df_results.head(10)[column], color='skyblue')
+    plt.title(column)
+    plt.xticks(rotation=45)  # 旋转标签，避免重叠
+
+plt.tight_layout()
+plt.show()
+
+
+
+### 储存结果
+df_results.to_csv('五因子结果.csv',index=False)
