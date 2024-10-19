@@ -8,9 +8,9 @@ import akshare as ak
 plt.rcParams ['font.sans-serif'] ='SimHei' 
 #allowing to demonstrate the 'minus'
 plt.rcParams ['axes.unicode_minus']=False
-code_name={'NVDA': 'Nvidia', 'TSLA': 'Tesla', 'AAPL': 'Apple', 'NFLX': 'Netfl1x', 
-           'MSFT': 'Microsoft', 'META': 'Meta', 'AMZN': 'Amazon', 'MSTR': 'Microstrategy', 
-           'PDD': 'PDD Holdings', 'GOOGL': 'Google alphabet', 'AMD': 'Advanced Micro Devices'}
+code_name={"600030": "中信证券", "001979":"招商蛇口", "000737": "北方铜业", "600611": "大众交通", 
+           "002085": "万丰奥威", "600171": "上海贝岭", "601020": "华钰矿业", "601857": "中国石油", 
+           "000550": "江铃汽车", "002155": "湖南黄金", "837592": "华信永道"}
 def get_stock_data(stock_code, start_date, end_date):
 """
 :param stockcode: code of the stock, like '000001'
