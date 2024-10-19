@@ -14,6 +14,8 @@ code_name={"600030": "中信证券", "001979":"招商蛇口", "000737": "北方�
            "000550": "江铃汽车", "002155": "湖南黄金", "837592": "华信永道"}
 code_list=list(code_name.keys())
 start_date='2023-08-01'  ;  end_date='2024-07-31'
+
+### obtaining the history stock trade data 
 def get_stock_data(stock_code, start_date, end_date):
     """
     :param stock_code: code of the stock, like '000001'
@@ -21,11 +23,14 @@ def get_stock_data(stock_code, start_date, end_date):
     :param end_date: the ending date of the data, in form 'YYYYMMDD'
     :return: the data of stocks traded in determined period
     """
+    # using AkShare to catch the data
     stock_df = ak.stock_zh_a_hist(symbol=stock_code, period='daily', start_date=start_date.replace('-',''), end_date=end_date.replace('-',''), adjust="qfq")
     stock_df['return rate'] = stock_df['收盘'].pct_change()
     return stock_df.dropna()
 return_dict={}
-#creating a ExcelWriter 
+
+
+### creating a ExcelWriter 
 writer = pd.ExcelWriter('stock_data.xlsx', engine='xlsxwriter')
 for code in code_list:
     try:
@@ -35,6 +40,9 @@ for code in code_list:
         pass
 writer._save()
 writer.close()
+
+
+### catching the factors data from the csv document
 """
 catching the factors, where 'trddy'is the date of trading, 
 'mkt_rf' is the market risk factor, 'smb' is the size factor (Small minus Big),
@@ -46,7 +54,9 @@ five_factors=five_factors.loc['2023-08-01':'2024-07-31',:]
 five_factors.index=pd.to_datetime(five_factors.index)
 #demonstrating the first 5 lines data
 five_factors.head()
-#defining sum return ratio, max drawdown, sharpe ratio and information ratio
+
+
+### defining sum return ratio, max drawdown, sharpe ratio and information ratio
 def sum_return_ratio(price_list):
     price_list=price_list.to_numpy()
     return (price_list[-1]-price_list[0])/price_list[0]
@@ -78,7 +88,7 @@ def deal(code='',mode='三因子'):
         return pd.DataFrame({'Alpha':betas[0],'MKT':betas[1],'SMB':betas[2],'HML':betas[3],'RMW':betas[4],'CMA':betas[5],
                         'sum_return_ratio':sum_return_ratio, 'MaxDrawdown': MaxDrawdown,'sharpe_ratio':sharpe_ratio, 'Information_Ratio': Information_Ratio,'code of stock':code},index=[0])
     else:
-        #zgpa_threefactor = pd.merge(three_factors, day_return,left_index=True, right_index=True)
+        #zgpa_threefactor = pd.merge(five_factors, day_return,left_index=True, right_index=True)
         result = sm.OLS(zgpa_threefactor['return rate'], sm.add_constant(zgpa_threefactor.loc[:,['mkt_rf','smb','hml']])).fit()
         betas=result.params
         return pd.DataFrame({'Alpha':betas[0],'MKT':betas[1],'SMB':betas[2],'HML':betas[3],
@@ -105,7 +115,7 @@ df_results.to_csv('3 factors results.csv',index=False)
 # dealing with 5 factors model
 df_results=pd.DataFrame()
 for code,df_one in return_dict.items():
-    result=deal(code=code,mode='5 factors') ;  result['stock_name']=code_name[code]
+    result=deal(code=code,mode='五因子') ;  result['stock_name']=code_name[code]
     df_results=pd.concat([df_results,result],axis=0,ignore_index=True)
 df_results=df_results[['stock_code', 'stock_name','Alpha', 'MKT', 'SMB', 'HML', 'RMW','CMA','sum_return_ratio', 'MaxDrawdown', 'sharpe_ratio', 'Information_Ratio']].sort_values(by='Alpha',ascending=False)
 df_results
