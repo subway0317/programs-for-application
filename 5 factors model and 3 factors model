@@ -4,6 +4,7 @@ import numpy as np
 import statsmodels.api as sm
 import seaborn as sns
 import akshare as ak
+import matplotlib.pyplot as plt
 #allowing Chinese chararcters
 plt.rcParams ['font.sans-serif'] ='SimHei' 
 #allowing to demonstrate the 'minus'
