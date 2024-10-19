@@ -12,11 +12,13 @@ plt.rcParams ['axes.unicode_minus']=False
 code_name={"600030": "中信证券", "001979":"招商蛇口", "000737": "北方铜业", "600611": "大众交通", 
            "002085": "万丰奥威", "600171": "上海贝岭", "601020": "华钰矿业", "601857": "中国石油", 
            "000550": "江铃汽车", "002155": "湖南黄金", "837592": "华信永道"}
+code_list=list(code_name.keys())
+start_date='2023-08-01'  ;  end_date='2024-07-31'
 def get_stock_data(stock_code, start_date, end_date):
     """
-    :param stockcode: code of the stock, like '000001'
-    :param startdate: the beginning date of the data, in form 'YYYYMMDD'
-    :param enddate: the ending date of the data, in form 'YYYYMMDD'
+    :param stock_code: code of the stock, like '000001'
+    :param start_date: the beginning date of the data, in form 'YYYYMMDD'
+    :param end_date: the ending date of the data, in form 'YYYYMMDD'
     :return: the data of stocks traded in determined period
     """
     stock_df = ak.stock_zh_a_hist(symbol=stock_code, period='daily', start_date=start_date.replace('-',''), end_date=end_date.replace('-',''), adjust="qfq")
@@ -24,14 +26,14 @@ def get_stock_data(stock_code, start_date, end_date):
     return stock_df.dropna()
 return_dict={}
 #creating a ExcelWriter 
-writer = pd.ExcelWriter('stock_data.xLsx', engine='xLswriter')
+writer = pd.ExcelWriter('stock_data.xlsx', engine='xlsxwriter')
 for code in code_list:
     try:
         return_dict[code]=get_stock_data(stock_code=code, start_date=start_date, end_date=end_date)[['date', 'close', 'return rate']].set_index('date')
         get_stock_data(stock_code=code, start_date='20230801', end_date='20240801').to_excel(writer, sheet_name=code)
     except:
         pass
-writer.save()
+writer._save()
 writer.close()
 """
 catching the factors, where 'trddy'is the date of trading, 
@@ -49,7 +51,7 @@ def sum_return_ratio(price_list):
     price_list=price_list.to_numpy()
     return (price_list[-1]-price_list[0])/price_list[0]
 def MaxDrawdown(price_list):
-    i = np.argmax((np.maximum.accumulate(price_list) - price_list) / np.maximum.accumulate(price_list))  # 结束位置
+    i = np.argmax((np.maximum.accumulate(price_list) - price_list) / np.maximum.accumulate(price_list))  
     if i == 0:
         return 0
     j = np.argmax(price_list[:i])  
@@ -60,16 +62,16 @@ def sharpe_ratio(price_list,rf=0.000041):
 def Information_Ratio(price_list,rf=0.000041):
     chaoer=sum_return_ratio(price_list)-((1+rf)**365-1)
     return chaoer/np.std(price_list.pct_change()-rf)
-# dealing with 3 factors model(CAPM)
-def deal(code='',mode='3 factors'): 
+# dealing with 3 factors model
+def deal(code='',mode='三因子'): 
     day_return = return_dict[code]
     day_return.index=pd.to_datetime(day_return.index)
     sum_return_ratio=sum_return_ratio(day_return['收盘'])
     MaxDrawdown=MaxDrawdown(day_return['收盘'])
     sharpe_ratio=sharpe_ratio(day_return['收盘'])
     Information_Ratio=Information_Ratio(day_return['收盘'])
-    zgpa_threefactor = pd.merge(three_factors, day_return,left_index=True, right_index=True)    
-    if mode=='5 factors':
+    zgpa_threefactor = pd.merge(five_factors, day_return,left_index=True, right_index=True)    
+    if mode=='五因子':
 
         result = sm.OLS(zgpa_threefactor['return rate'], sm.add_constant(zgpa_threefactor.loc[:,['mkt_rf','smb','hml','rmw','cma']])).fit()
         betas=result.params
@@ -77,7 +79,7 @@ def deal(code='',mode='3 factors'):
                         'sum_return_ratio':sum_return_ratio, 'MaxDrawdown': MaxDrawdown,'sharpe_ratio':sharpe_ratio, 'Information_Ratio': Information_Ratio,'code of stock':code},index=[0])
     else:
         #zgpa_threefactor = pd.merge(three_factors, day_return,left_index=True, right_index=True)
-        result = sm.OLS(zgpa_threefactor['收益率'], sm.add_constant(zgpa_threefactor.loc[:,['mkt_rf','smb','hml']])).fit()
+        result = sm.OLS(zgpa_threefactor['return rate'], sm.add_constant(zgpa_threefactor.loc[:,['mkt_rf','smb','hml']])).fit()
         betas=result.params
         return pd.DataFrame({'Alpha':betas[0],'MKT':betas[1],'SMB':betas[2],'HML':betas[3],
                         'sum_return_ratio':sum_return_ratio, 'MaxDrawdown': MaxDrawdown, 'sharpe_ratio':sharpe_ratio, 'Information_Ratio': Information_Ratio,'code of stock':code},index=[0])
@@ -86,7 +88,7 @@ for code,df_one in return_dict.items():
     result=deal(code=code) ;  result['stock_name']=code_name[code]
     df_results=pd.concat([df_results,result],axis=0,ignore_index=True)
 # selecting stocks with top 10 alpha to visualization 
-df_results=df_results[['code of stock', 'stock_name','Alpha', 'MKT', 'SMB', 'HML', 'RMW','CMA','sum_return_ratio', 'MaxDrawdown', 'sharpe_ratio', 'Information_Ratio']].sort_values(by='Alpha',ascending=False)
+df_results=df_results[['stock_code', 'stock_name','Alpha', 'MKT', 'SMB', 'HML', 'RMW','CMA','sum_return_ratio', 'MaxDrawdown', 'sharpe_ratio', 'Information_Ratio']].sort_values(by='Alpha',ascending=False)
 df_results
 plt.figure(figsize=(10, 8),dpi=128)
 for i, column in enumerate(['Alpha', 'MKT', 'SMB', 'HML', 'sum_return_ratio', 'MaxDrawdown', 'sharpe_ratio', 'Information_Ratio'], 1):
@@ -105,7 +107,7 @@ df_results=pd.DataFrame()
 for code,df_one in return_dict.items():
     result=deal(code=code,mode='5 factors') ;  result['stock_name']=code_name[code]
     df_results=pd.concat([df_results,result],axis=0,ignore_index=True)
-df_results=df_results[['code of stock', 'stock_name','Alpha', 'MKT', 'SMB', 'HML', 'RMW','CMA','sum_return_ratio', 'MaxDrawdown', 'sharpe_ratio', 'Information_Ratio']].sort_values(by='Alpha',ascending=False)
+df_results=df_results[['stock_code', 'stock_name','Alpha', 'MKT', 'SMB', 'HML', 'RMW','CMA','sum_return_ratio', 'MaxDrawdown', 'sharpe_ratio', 'Information_Ratio']].sort_values(by='Alpha',ascending=False)
 df_results
 plt.figure(figsize=(10,10),dpi=128)
 for i, column in enumerate(['Alpha', 'MKT', 'SMB', 'HML', 'RMW','CMA', 'sum_return_ratio', 'MaxDrawdown', 'sharpe_ratio', 'Information_Ratio'], 1):
