@@ -12,18 +12,18 @@ code_name={"600030": "中信证券", "001979":"招商蛇口", "000737": "北方�
            "002085": "万丰奥威", "600171": "上海贝岭", "601020": "华钰矿业", "601857": "中国石油", 
            "000550": "江铃汽车", "002155": "湖南黄金", "837592": "华信永道"}
 def get_stock_data(stock_code, start_date, end_date):
-"""
-:param stockcode: code of the stock, like '000001'
-:param startdate: the beginning date of the data, in form 'YYYYMMDD'
-:param enddate: the ending date of the data, in form 'YYYYMMDD'
-:return: the data of stocks traded in determined period
-"""
+    """
+    :param stockcode: code of the stock, like '000001'
+    :param startdate: the beginning date of the data, in form 'YYYYMMDD'
+    :param enddate: the ending date of the data, in form 'YYYYMMDD'
+    :return: the data of stocks traded in determined period
+    """
 stock_df = ak.stock_zh_a_hist(symbol=stock_code, period='daily', start_date=start_date.replace('-',''), end_date=end_date.replace('-',''), adjust="qfq")
 stock_df['return rate'] = stock_df['收盘'].pct_change()
 return stock_df.dropna()
 return_dict={}
 #creating a ExceLWriter 
-writer = pd.ExceLWriter('stock_data.xLsx', engine='xLswriter)
+writer = pd.ExceLWriter('stock_data.xLsx', engine='xLswriter')
 for code in code_list:
     try:
         return_dict[code]=get_stock_data(stock_code=code, start_date=start_date, end_date=end_date)[['date', 'close', 'return rate']].set_index('date')
@@ -107,7 +107,7 @@ for code,df_one in return_dict.items():
 df_results=df_results[['code of stock', 'stock_name','Alpha', 'MKT', 'SMB', 'HML', 'RMW','CMA','sum_return_ratio', 'MaxDrawdown', 'sharpe_ratio', 'Information_Ratio']].sort_values(by='Alpha',ascending=False)
 df_results
 plt.figure(figsize=(10,10),dpi=128)
-for i, column in enumerate(['Alpha', 'MKT', 'SMB', 'HML', 'RMW','CMA', 'sum_return_ratio', ''MaxDrawdown', 'sharpe_ratio', 'Information_Ratio'], 1):
+for i, column in enumerate(['Alpha', 'MKT', 'SMB', 'HML', 'RMW','CMA', 'sum_return_ratio', 'MaxDrawdown', 'sharpe_ratio', 'Information_Ratio'], 1):
     plt.subplot(5, 2, i)
     plt.bar(df_results.head(10)['stock_name'], df_results.head(10)[column], color='skyblue')
     plt.title(column)
