@@ -72,7 +72,9 @@ def sharpe_ratio(price_list,rf=0.000041):
 def Information_Ratio(price_list,rf=0.000041):
     chaoer=sum_return_ratio(price_list)-((1+rf)**365-1)
     return chaoer/np.std(price_list.pct_change()-rf)
-# dealing with 3 factors model
+
+
+### dealing with 3 factors model
 def deal(code='',mode='三因子'): 
     day_return = return_dict[code]
     day_return.index=pd.to_datetime(day_return.index)
@@ -85,27 +87,34 @@ def deal(code='',mode='三因子'):
 
         result = sm.OLS(zgpa_threefactor['return rate'], sm.add_constant(zgpa_threefactor.loc[:,['mkt_rf','smb','hml','rmw','cma']])).fit()
         betas=result.params
-        return pd.DataFrame({'Alpha':betas[0],'MKT':betas[1],'SMB':betas[2],'HML':betas[3],'RMW':betas[4],'CMA':betas[5],
-                        'sum_return_ratio':sum_return_ratio, 'MaxDrawdown': MaxDrawdown,'sharpe_ratio':sharpe_ratio, 'Information_Ratio': Information_Ratio,'code of stock':code},index=[0])
+        return pd.DataFrame({'Alpha':betas[0],'MKT':betas[1],'SMB':betas[2],'HML':betas[3],'RMW':betas[4],'CMA':betas[5], 'sum_return_ratio':sum_return_ratio, 'MaxDrawdown': MaxDrawdown,'sharpe_ratio':sharpe_ratio, 'Information_Ratio': Information_Ratio,'stock_code':code},index=[0])
     else:
         #zgpa_threefactor = pd.merge(five_factors, day_return,left_index=True, right_index=True)
         result = sm.OLS(zgpa_threefactor['return rate'], sm.add_constant(zgpa_threefactor.loc[:,['mkt_rf','smb','hml']])).fit()
         betas=result.params
-        return pd.DataFrame({'Alpha':betas[0],'MKT':betas[1],'SMB':betas[2],'HML':betas[3],
-                        'sum_return_ratio':sum_return_ratio, 'MaxDrawdown': MaxDrawdown, 'sharpe_ratio':sharpe_ratio, 'Information_Ratio': Information_Ratio,'code of stock':code},index=[0])
+        return pd.DataFrame({'Alpha':betas[0],'MKT':betas[1],'SMB':betas[2],'HML':betas[3], 'sum_return_ratio':sum_return_ratio, 'MaxDrawdown': MaxDrawdown, 'sharpe_ratio':sharpe_ratio, 'Information_Ratio': Information_Ratio,'stock_code':code},index=[0])
 df_results=pd.DataFrame()
 for code,df_one in return_dict.items():
     result=deal(code=code) ;  result['stock_name']=code_name[code]
     df_results=pd.concat([df_results,result],axis=0,ignore_index=True)
-# selecting stocks with top 10 alpha to visualization 
-df_results=df_results[['stock_code', 'stock_name','Alpha', 'MKT', 'SMB', 'HML', 'RMW','CMA','sum_return_ratio', 'MaxDrawdown', 'sharpe_ratio', 'Information_Ratio']].sort_values(by='Alpha',ascending=False)
-df_results
-plt.figure(figsize=(10, 8),dpi=128)
-for i, column in enumerate(['Alpha', 'MKT', 'SMB', 'HML', 'sum_return_ratio', 'MaxDrawdown', 'sharpe_ratio', 'Information_Ratio'], 1):
-    plt.subplot(4, 2, i)
-    plt.bar(df_results.head(10)['stock_name'], df_results.head(10)[column], color='skyblue')
-    plt.title(column)
-    plt.xticks(rotation=45)
+
+
+### visualization of 3 factors model
+print(df_results.columns)  # Check the available columns
+if not df_results.empty:
+   df_results=df_results[['stock_code', 'stock_name','Alpha', 'MKT', 'SMB', 'HML', 'RMW','CMA','sum_return_ratio', 'MaxDrawdown', 'sharpe_ratio', 'Information_Ratio']].sort_values(by='Alpha',ascending=False)
+   df_results
+
+   plt.figure(figsize=(10, 8),dpi=128)
+   for i, column in enumerate(['Alpha', 'MKT', 'SMB', 'HML', 'sum_return_ratio', 'MaxDrawdown', 'sharpe_ratio', 'Information_Ratio'], 1):
+       plt.subplot(4, 2, i)
+       plt.bar(df_results.head(10)['stock_name'], df_results.head(10)[column], color='skyblue')
+       plt.title(column)
+       plt.xticks(rotation=45)
+
+else:
+    print("DataFrame is empty. Please check your calculations.")
+
 plt.tight_layout()
 plt.show()
 ### saving the result
@@ -129,6 +138,7 @@ plt.tight_layout()
 plt.show()
 ### saving the result
 df_results.to_csv('5 factors results.csv',index=False)
+
 
 
  
