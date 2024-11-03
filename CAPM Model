@@ -1,0 +1,71 @@
+import akshare as ak
+import arrow
+import numpy as np
+### Calculating the risk-free rate
+
+# Grabbing the yield rate data of each bond
+now = arrow.now()
+start = now.shift(years=-1)
+end = f"{now.year}{now.month:02d}{now.day:02d}"
+start = f"{start.year}{start.month:02d}{start.day:02d}"
+
+bond = ak.bond_china_yield(start_date=start, 
+                           end_date=end)
+bond.set_index(keys='曲线名称', inplace=True)
+bond
+
+# Calculating the risk-free rate, which equals to the mean of 中债国债收益率曲线 (China Bond treasury bond Yield Curve)
+rf = bond[bond.index=='中债国债收益率曲线']['1 年'].mean()
+print(rf)
+rf = rf / 100
+
+
+
+### Calculating the Shanghai and Shenzhen 300 Yield
+
+hs300 = ak.stock_zh_index_daily(symbol="sz399300")
+print(hs300)
+now = arrow.now()
+year_ago = now.shift(years = -1)
+
+filter = hs300.index >= np.datetime64(year_ago)
+year_ago = hs300[filter].index[0]
+
+#Calculating the yield on buying and holding Shanghai and Shenzhen 300 in the past year
+filter = hs300.index == year_ago
+buy_price = hs300[filter].iloc[0]["close"]
+buy_and_hold = hs300["close"][-1]/buy_price - 1
+print(f"买入并持收益：{buy_and_hold:.2%}")
+
+# Calculating the annualized returns based on the mean
+market_returns = hs300.pct_change()["close"].dropna()
+filter = returns.index >= year_ago
+market_annual = (1+returns[filter].mean())**242-1
+print(f"年化收益:{market_annual:.2%}")
+
+
+
+###
+index_stock_cons_df = ak.index_stock_cons("399300")
+print(index_stock_cons_df)
+
+#
+np.random.seed()
+stocks = index_stock_cons_df['品种代码'].to_list()
+stocks = random.sample(stocks, 10)
+frames = {}
+now = arrow.now()
+start = now.shift(years = -1)
+end = now.format("YYYYMMDD")
+start = start.format("YYYYMMDD")
+
+# Grabing the statistics of the 10 stocks selected
+for code in stocks:
+    bars = ak.stock_zh_a_hist(symbol=code, 
+                              period="daily", 
+                              start_date=start, 
+                              end_date=end, 
+                              adjust="qfq")
+
+    bars.index = pd.to_datetime(bars["日期"])
+    frames[code] = bars["收盘"]
