@@ -44,12 +44,13 @@ market_annual = (1+returns[filter].mean())**242-1
 print(f"年化收益:{market_annual:.2%}")
 
 
-
 ###
+
+# Obtaining the Shanghai and Shenzhen 300 constituent stocks
 index_stock_cons_df = ak.index_stock_cons("399300")
 print(index_stock_cons_df)
 
-#
+# randomly selecting 10 stocks
 np.random.seed()
 stocks = index_stock_cons_df['品种代码'].to_list()
 stocks = random.sample(stocks, 10)
