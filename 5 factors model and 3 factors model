@@ -9,13 +9,19 @@ import matplotlib.pyplot as plt
 plt.rcParams ['font.sans-serif'] ='SimHei' 
 #allowing to demonstrate the 'minus'
 plt.rcParams ['axes.unicode_minus']=False
+
+
+### code of stocks
 code_name={"600030": "中信证券", "001979":"招商蛇口", "000737": "北方铜业", "600611": "大众交通", 
            "002085": "万丰奥威", "600171": "上海贝岭", "601020": "华钰矿业", "601857": "中国石油", 
            "000550": "江铃汽车", "002155": "湖南黄金", "837592": "华信永道"}
 code_list=list(code_name.keys())
 start_date='2023-08-01'  ;  end_date='2024-07-31'
 
+
 ### obtaining the history stock trade data 
+
+# defining the function that grab the statistics of A stocks
 def get_stock_data(stock_code, start_date, end_date):
     """
     :param stock_code: code of the stock, like '000001'
@@ -64,7 +70,7 @@ def MaxDrawdown(price_list):
     i = np.argmax((np.maximum.accumulate(price_list) - price_list) / np.maximum.accumulate(price_list))  
     if i == 0:
         return 0
-    j = np.argmax(price_list[:i])  
+    j = np.argmax(price_list[:i])  # the starting place
     return (price_list[j] - price_list[i]) / (price_list[j])
 def sharpe_ratio(price_list,rf=0.000041):
     daily_return = price_list.pct_change()
@@ -93,6 +99,8 @@ def deal(code='',mode='三因子'):
         result = sm.OLS(zgpa_threefactor['return rate'], sm.add_constant(zgpa_threefactor.loc[:,['mkt_rf','smb','hml']])).fit()
         betas=result.params
         return pd.DataFrame({'Alpha':betas[0],'MKT':betas[1],'SMB':betas[2],'HML':betas[3], 'sum_return_ratio':sum_return_ratio, 'MaxDrawdown': MaxDrawdown, 'sharpe_ratio':sharpe_ratio, 'Information_Ratio': Information_Ratio,'stock_code':code},index=[0])
+
+
 df_results=pd.DataFrame()
 for code,df_one in return_dict.items():
     result=deal(code=code) ;  result['stock_name']=code_name[code]
@@ -115,8 +123,11 @@ if not df_results.empty:
 else:
     print("DataFrame is empty. Please check your calculations.")
 
+# Creating a multi subgraph layout
 plt.tight_layout()
 plt.show()
+
+
 ### saving the result
 df_results.to_csv('3 factors results.csv',index=False)
 
@@ -126,14 +137,20 @@ df_results=pd.DataFrame()
 for code,df_one in return_dict.items():
     result=deal(code=code,mode='五因子') ;  result['stock_name']=code_name[code]
     df_results=pd.concat([df_results,result],axis=0,ignore_index=True)
+
+# selecting the stocks with top 10 alpha and drawing the graph
 df_results=df_results[['stock_code', 'stock_name','Alpha', 'MKT', 'SMB', 'HML', 'RMW','CMA','sum_return_ratio', 'MaxDrawdown', 'sharpe_ratio', 'Information_Ratio']].sort_values(by='Alpha',ascending=False)
 df_results
 plt.figure(figsize=(10,10),dpi=128)
+
+# Creating a multi subgraph layout
 for i, column in enumerate(['Alpha', 'MKT', 'SMB', 'HML', 'RMW','CMA', 'sum_return_ratio', 'MaxDrawdown', 'sharpe_ratio', 'Information_Ratio'], 1):
     plt.subplot(5, 2, i)
     plt.bar(df_results.head(10)['stock_name'], df_results.head(10)[column], color='skyblue')
     plt.title(column)
     plt.xticks(rotation=45)  
+
+# adjusting the position of the graph 
 plt.tight_layout()
 plt.show()
 ### saving the result
