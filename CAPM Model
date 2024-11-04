@@ -70,3 +70,32 @@ for code in stocks:
 
     bars.index = pd.to_datetime(bars["日期"])
     frames[code] = bars["收盘"]
+
+# Merging with index market data
+start = np.datetime64(now.shift(years = -1))
+frames["399300"] = hs300[hs300.index >= start]["close"]
+df = pd.DataFrame(frames)
+
+# Calculating daily earnings
+returns = df.pct_change()
+
+# If there is NAN, the subsequent regression methods will not be able to aggregate
+returns.dropna(how='any', inplace=True)
+returns.style.format('{:,.2%}')
+
+
+### Calculating the beta
+
+# Calculating by regression
+cols = df.columns
+for name in cols:
+    x = returns[name]
+    y = returns["399300"]
+    beta, alpha = np.polyfit(x, y, deg=1)
+    print(name, f"{beta:.2%} {alpha:.2%}")
+
+# Demonstrating beta and expected yield rate of one stock
+code = "600030"
+beta = params[code][0]
+er = rf + beta * (market_annual - rf)
+print(f"code beta: {beta:.2f}, Er: {er:.2%}")
