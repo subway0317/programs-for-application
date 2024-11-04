@@ -15,7 +15,7 @@ bond.set_index(keys='曲线名称', inplace=True)
 bond
 
 # Calculating the risk-free rate, which equals to the mean of 中债国债收益率曲线 (China Bond treasury bond Yield Curve)
-rf = bond[bond.index=='中债国债收益率曲线']['1 年'].mean()
+rf = bond[bond.index=='中债国债收益率曲线']['1年'].mean()
 print(rf)
 rf = rf / 100
 
