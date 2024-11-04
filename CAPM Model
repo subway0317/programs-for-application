@@ -31,7 +31,10 @@ now = arrow.now()
 year_ago = now.shift(years = -1)
 
 filter = hs300.index >= np.datetime64(year_ago)
-year_ago = hs300[filter].index[0]
+if not hs300[filter].empty:
+    year_ago = hs300[filter].index[0]
+else:
+    print("Didn't discover matching date")
 
 #Calculating the yield on buying and holding Shanghai and Shenzhen 300 in the past year
 filter = hs300.index == year_ago
@@ -53,7 +56,7 @@ index_stock_cons_df = ak.index_stock_cons("399300")
 print(index_stock_cons_df)
 
 # randomly selecting 10 stocks
-np.random.seed()
+np.random.seed(0)
 stocks = index_stock_cons_df['品种代码'].to_list()
 stocks = random.sample(stocks, 10)
 frames = {}
