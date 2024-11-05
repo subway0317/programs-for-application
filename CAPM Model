@@ -51,7 +51,7 @@ market_annual = (1+returns[filter].mean())**242-1
 print(f"年化收益:{market_annual:.2%}")
 
 
-###
+### Grabing the data of stocks of Shanghai and Shenzhen 300
 
 # Obtaining the Shanghai and Shenzhen 300 constituent stocks
 index_stock_cons_df = ak.index_stock_cons("399300")
@@ -106,3 +106,17 @@ code = "600030"
 beta = params[code][0]
 er = rf + beta * (market_annual - rf)
 print(f"code beta: {beta:.2f}, Er: {er:.2%}")
+
+# Calculating by covariances
+params = ()
+for name in cols:
+    cov = np.cov(returns[name], returns["399300"])
+    beta = cov[0,1]/cov[1,1]
+    er = rf + beta * (market_annual - rf)
+    print(f"{name} beta: {beta:.2%}, Er: {er:.2%}")
+    params[name] = beta
+code = "600030"
+beta = params[code]
+
+er = rf + beta * (market_annual - rf)
+print(f"code beta: {beta:.2f}, Er: {er:.2%}")  # The expected return rate calculated with  covariances  
