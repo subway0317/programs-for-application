@@ -120,3 +120,5 @@ beta = params[code]
 
 er = rf + beta * (market_annual - rf)
 print(f"code beta: {beta:.2f}, Er: {er:.2%}")  # The expected return rate calculated with  covariances  
+
+### There is indeed some delicate difference between the results of beta, depending on the method selected
