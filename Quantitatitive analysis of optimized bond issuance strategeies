@@ -16,10 +16,8 @@ financial_data = {
     'Ownership Structure': ['Public', 'Private', 'Public']
 }
 
-# Creating a DataFrame for financial data
+# Creating a dataFrame for financial data
 df = pd.DataFrame(financial_data)
-
-# Defining functions for financial ratios and performance metrics
 
 # Debt-to-Equity Ratio (D/E)
 def debt_to_equity(row):
@@ -37,7 +35,7 @@ def cash_flow_to_debt(row):
 def return_on_equity(row):
     return row['Net Income'] / row['Equity']
 
-# Performing quantitative analysis and append metrics to DataFrame
+# Performing quantitative analysis and append metrics to dataFrame
 df['Debt-to-Equity'] = df.apply(debt_to_equity, axis=1)
 df['Interest Coverage'] = df.apply(interest_coverage, axis=1)
 df['Cash Flow to Debt'] = df.apply(cash_flow_to_debt, axis=1)
@@ -60,7 +58,7 @@ def bond_issuance_strategy(row):
 # Applying bond issuance strategy to each company
 df['Bond Issuance Strategy'] = df.apply(bond_issuance_strategy, axis=1)
 
-# Visualizing results (Optional)
+# Visualizing results
 def plot_metrics(df):
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
     df.set_index('Company')[['Debt-to-Equity', 'Interest Coverage', 'Cash Flow to Debt', 'Return on Equity (ROE)']].plot(kind='bar', ax=axes[0, 0], title='Debt-to-Equity Ratio')
