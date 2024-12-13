@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 # Financial Data (Just an example)
 financial_data = {
-    'Company': ['Company A', 'Company B', 'Company C'],
+    'Company': ['Tesla', 'IBM', '711'],
     'Revenue': [5000000, 7500000, 9000000] 
     'EBITDA': [1500000, 1800000, 2500000]  
     'Net Income': [500000, 700000, 900000] 
