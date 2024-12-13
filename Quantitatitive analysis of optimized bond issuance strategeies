@@ -37,14 +37,14 @@ def cash_flow_to_debt(row):
 def return_on_equity(row):
     return row['Net Income'] / row['Equity']
 
-# Perform quantitative analysis and append metrics to DataFrame
+# Performing quantitative analysis and append metrics to DataFrame
 df['Debt-to-Equity'] = df.apply(debt_to_equity, axis=1)
 df['Interest Coverage'] = df.apply(interest_coverage, axis=1)
 df['Cash Flow to Debt'] = df.apply(cash_flow_to_debt, axis=1)
 df['Return on Equity (ROE)'] = df.apply(return_on_equity, axis=1)
 
-# Summarize financial ratios and metrics
-def summarize_metrics(df):
+# Summarizing financial ratios and metrics
+def summarze_metrics(df):
     summary = df[['Company', 'Debt-to-Equity', 'Interest Coverage', 'Cash Flow to Debt', 'Return on Equity (ROE)']]
     return summary
 
@@ -57,7 +57,7 @@ def bond_issuance_strategy(row):
     else:
         return 'Moderate Risk, Further Analysis Required'
 
-# Apply bond issuance strategy to each company
+# Applying bond issuance strategy to each company
 df['Bond Issuance Strategy'] = df.apply(bond_issuance_strategy, axis=1)
 
 # Visualizing results (Optional)
@@ -70,12 +70,9 @@ def plot_metrics(df):
     plt.tight_layout()
     plt.show()
 
-# Display summary and strategy
+# Display of summary and strategy
 print("Financial Summary with Key Metrics:\n")
 print(summarize_metrics(df))
 
 print("\nSuggested Bond Issuance Strategies:\n")
 print(df[['Company', 'Bond Issuance Strategy']])
-
-# Visualize metrics
-plot_metrics(df)
