@@ -6,26 +6,26 @@ import matplotlib.pyplot as plt
 # Financial Data (Just an example)
 financial_data = {
     'Company': ['Company A', 'Company B', 'Company C'],
-    'Revenue': [5000000, 7500000, 9000000],  # Example revenue data
-    'EBITDA': [1500000, 1800000, 2500000],   # Example EBITDA data
-    'Net Income': [500000, 700000, 900000],   # Example Net Income data
-    'Total Debt': [2000000, 3000000, 4000000],  # Example Total Debt data
-    'Cash Flow': [1200000, 1800000, 2300000],   # Cash Flow
-    'Equity': [4000000, 5000000, 6000000],      # Equity value
-    'Interest Expense': [100000, 150000, 200000],  # Interest Expense data
+    'Revenue': [5000000, 7500000, 9000000],  # Example of revenue data
+    'EBITDA': [1500000, 1800000, 2500000],   # Example of EBITDA data
+    'Net Income': [500000, 700000, 900000],   # Example of Net Income data
+    'Total Debt': [2000000, 3000000, 4000000],  # Example of Total Debt data
+    'Cash Flow': [1200000, 1800000, 2300000],   # Example of Cash Flow
+    'Equity': [4000000, 5000000, 6000000],      # Example of Equity value
+    'Interest Expense': [100000, 150000, 200000],  # Example of Interest Expense data
     'Ownership Structure': ['Public', 'Private', 'Public'],  # Ownership type (Public/Private)
 }
 
-# Creating a DataFrame for the financial data
+# Creating a DataFrame for financial data
 df = pd.DataFrame(financial_data)
 
-# Define functions for financial ratios and performance metrics
+# Defining functions for financial ratios and performance metrics
 
 # Debt-to-Equity Ratio (D/E)
 def debt_to_equity(row):
     return row['Total Debt'] / row['Equity']
 
-# Interest Coverage Ratio (EBITDA / Interest Expense)
+# Interest Coverage Ratio 
 def interest_coverage(row):
     return row['EBITDA'] / row['Interest Expense']
 
