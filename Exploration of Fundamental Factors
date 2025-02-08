@@ -26,17 +26,18 @@ def get_stock_data(stock_code):
     # Analyzing the fundamental data
     data = {
         "Stock Code": stock_code,
-        "Name": "Extracted Name",  
-        "PE": "Extracted PE",  
-        "PB": "Extracted PB",  
-        "ROE": "Extracted ROE",  
-        "ROA": "Extracted ROA",  
-        "DebtRatio": "Extracted Debt Ratio"
-        "DividendYield": "Extracted Dividend Yield",
-        "FutureReturn":  "Extracted Future Return"
+        "Name": soup.find("div", class_="stock-name").text.strip(), 
+        "PE": float(soup.find("span", class_="pe-ratio").text.strip()),  
+        "PB": float(soup.find("span", class_="pb-ratio").text.strip()),
+        "ROE": float(soup.find("span", class_="roe-ratio").text.strip()),  
+        "ROA": float(soup.find("span", class_="roa-ratio").text.strip()),  
+        "DebtRatio": float(soup.find("span", class_="debt-ratio").text.strip()),
+        "DividendYield": float(soup.find("span", class_="dividend-yield").text.strip()),
+        "FutureReturn":  "FutureReturn": float(soup.find("span", class_="future-return").text.strip())
     }
 
     return data
+
 # Grabing data of all stocks mentioned
 stock_data = [get_stock_data(code) for code in stock_list]
 
