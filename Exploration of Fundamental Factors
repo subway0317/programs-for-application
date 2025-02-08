@@ -24,3 +24,23 @@ def get_stock_data(stock_code):
     soup = BeautifulSoup(response.text, "html.parser")
 
     # Analyzing the fundamental data
+    data = {
+        "Stock Code": stock_code,
+        "Name": "Extracted Name",  
+        "PE": "Extracted PE",  
+        "PB": "Extracted PB",  
+        "ROE": "Extracted ROE",  
+        "ROA": "Extracted ROA",  
+        "DebtRatio": "Extracted Debt Ratio"
+        "DividendYield": "Extracted Dividend Yield"
+        "FutureReturn":  "Extracted Future Return"
+    }
+
+    return data
+# Grabing data of all stocks mentioned
+stock_data = [get_stock_data(code) for code in stock_list]
+
+# Delete the data with problems
+stock_data = [data for data in stock_data if data is not None]
+
+data = pd.DataFrame(stock_data)
