@@ -1,1 +1,9 @@
+## Exploration of Fundamental Factors based on Chinese A stocks market
+import pandas as pd
+import numpy as np
+import akshare as ak
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LassoCV
+import matplotlib.pyplot as plt
 
+# Grabbing the fundamental data of stocks
