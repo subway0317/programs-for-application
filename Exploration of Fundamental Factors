@@ -96,4 +96,24 @@ if not mean_returns.empty:
 else:
    print("No data available for plotting.")
 
+## 6. Building Multi-Factors Model
 
+if len(selected_features) > 0:
+    X_selected = X[selected_features]
+else:
+    raise ValueError("No selected features for modeling.")
+
+# Training set and testing set
+X_train, X_test, y_train, y_test = train_test_split(X_selected, y, test_size=0.2, random_state=42)
+
+# Construction of regression model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Anticipating the future return
+y_pred = model.predict(X_test)
+
+## 7. Outputting weights of factors
+factor_weights = pd.Series(model.coef_, index=selected_features, name="Factor Weights")
+print("Factor Weights:")
+print(factor_weights)
