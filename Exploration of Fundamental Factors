@@ -68,10 +68,13 @@ mean_returns = data.groupby('Group')['FutureReturn'].mean()
 
 ## 5. Visualization
 plt.figure(figsize=(10, 6))
-mean_returns.plot(kind='bar', color=['red', 'blue', 'green'])
-plt.title("A-share Fundamental Factor Grouped Returns")
-plt.ylabel("Average Future Return")
-plt.xlabel("Factor Score Group")
-plt.show()
+if not mean_returns.empty:
+   mean_returns.plot(kind='bar', color=['red', 'blue', 'green'])
+   plt.title("A-share Fundamental Factor Grouped Returns")
+   plt.ylabel("Average Future Return")
+   plt.xlabel("Factor Score Group")
+   plt.show()
+else:
+   print("No data available for plotting.")
 
 
