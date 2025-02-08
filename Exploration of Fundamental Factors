@@ -44,3 +44,33 @@ stock_data = [get_stock_data(code) for code in stock_list]
 stock_data = [data for data in stock_data if data is not None]
 
 data = pd.DataFrame(stock_data)
+
+## 2. Data Preprocessing
+features = ['PE', 'PB', 'ROE', 'ROA', 'DebtRatio', 'DividendYield']
+X = data[features]
+y = data['FutureReturn']
+
+# Standardization
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+## 3. Employing Lasso to filtrating factors
+lasso = LassoCv(cv=5, random_state=42).fit(X_scaled, y)
+selected_features = np.array(features)[lasso.coef_!= 0]
+print("Filtrating the crucial factors:", selected_features)
+
+## 4. Calculating the factors' scores and perform group backtesting
+factor_scores = X_scaled @ lasso.coef_
+data['FactorScore'] = factor_scores
+data['Group'] = pd.qcut(data['FactorScore'], 3, labels=['Low', 'Medium', 'High'])
+mean_returns = data.groupby('Group')['FutureReturn'].mean()
+
+## 5. Visualization
+plt.figure(figsize=(, ))
+mean_returns.plot(kind='bar', color=['red', 'blue', 'green'])
+plt.title("A-share Fundamental Factor Grouped Returns")
+plt.ylabel("Average Future Return")
+plt.xlabel("Factor Score Group")
+plt.show()
+
+
