@@ -33,7 +33,7 @@ def get_stock_data(stock_code):
         "ROA": float(soup.find("span", class_="roa-ratio").text.strip()),  
         "DebtRatio": float(soup.find("span", class_="debt-ratio").text.strip()),
         "DividendYield": float(soup.find("span", class_="dividend-yield").text.strip()),
-        "FutureReturn":  "FutureReturn": float(soup.find("span", class_="future-return").text.strip())
+        "FutureReturn": float(soup.find("span", class_="future-return").text.strip())
     }
 
     return data
@@ -51,7 +51,8 @@ features = ['PE', 'PB', 'ROE', 'ROA', 'DebtRatio', 'DividendYield']
 if all(feature in data.columns for feature in features) and 'FutureReturn' in data.columns:
    X = data[features]
    y = data['FutureReturn']
-
+else:
+   raise ValueError("Missing necessary columns in data")
 # Standardization
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
@@ -68,8 +69,8 @@ data['Group'] = pd.qcut(data['FactorScore'], 3, labels=['Low', 'Medium', 'High']
 mean_returns = data.groupby('Group')['FutureReturn'].mean()
 
 ## 5. Visualization
-plt.figure(figsize=(10, 6))
 if not mean_returns.empty:
+   plt.figure(figsize=(10, 6))
    mean_returns.plot(kind='bar', color=['red', 'blue', 'green'])
    plt.title("A-share Fundamental Factor Grouped Returns")
    plt.ylabel("Average Future Return")
