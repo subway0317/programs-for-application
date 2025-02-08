@@ -1,9 +1,26 @@
-## Exploration of Fundamental Factors based on Chinese A stocks market
+### Exploration of Fundamental Factors based on Chinese A stocks market
 import pandas as pd
 import numpy as np
 import akshare as ak
+import requests
+form bs4 import BeautifulSoup
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LassoCV
 import matplotlib.pyplot as plt
 
-# Grabbing the fundamental data of stocks
+## 1. Grabbing the fundamental data of stocks
+stock_list = ["600030", "001979", "000737", "600171", "002155"]
+base_url = "http://quote.eastmoney.com/concept/{code}.html"
+
+def get_stock_data(stock_code):
+    url = base_url.format(code=stock_code)
+    headers = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        print(f"Failed to fetch data for {stock_code}")
+        return None
+    
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    # Analyzing the fundamental data
