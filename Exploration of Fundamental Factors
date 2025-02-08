@@ -8,7 +8,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LassoCV
 import matplotlib.pyplot as plt
 
-## 1. Grabbing the fundamental data of stocks. Just an example, the real operation depends on the website's structure
+## 1. Grabbing the fundamental data of stocks. This is just an example, the real operation depends on the website's structure
 stock_list = ["600030", "001979", "000737", "600171", "002155"]
 base_url = "http://quote.eastmoney.com/concept/{code}.html"
 
@@ -24,18 +24,21 @@ def get_stock_data(stock_code):
     soup = BeautifulSoup(response.text, "html.parser")
 
     # Analyzing the fundamental data
-    data = {
-        "Stock Code": stock_code,
-        "Name": soup.find("div", class_="stock-name").text.strip(), 
-        "PE": float(soup.find("span", class_="pe-ratio").text.strip()),  
-        "PB": float(soup.find("span", class_="pb-ratio").text.strip()),
-        "ROE": float(soup.find("span", class_="roe-ratio").text.strip()),  
-        "ROA": float(soup.find("span", class_="roa-ratio").text.strip()),  
-        "DebtRatio": float(soup.find("span", class_="debt-ratio").text.strip()),
-        "DividendYield": float(soup.find("span", class_="dividend-yield").text.strip()),
-        "FutureReturn": float(soup.find("span", class_="future-return").text.strip())
-    }
-
+    try:
+        data = {
+            "Stock Code": stock_code,
+            "Name": soup.find("div", class_="stock-name").text.strip() if soup.find("div", class_="stock-name") else None,
+            "PE": float(soup.find("span", class_="pe-ratio").text.strip()) if soup.find("span", class_="pe-ratio") else np.nan,
+            "PB": float(soup.find("span", class_="pb-ratio").text.strip()) if soup.find("span", class_="pb-ratio") else np.nan,
+            "ROE": float(soup.find("span", class_="roe-ratio").text.strip()) if soup.find("span", class_="roe-ratio") else np.nan,
+            "ROA": float(soup.find("span", class_="roa-ratio").text.strip()) if soup.find("span", class_="roa-ratio") else np.nan,
+            "DebtRatio": float(soup.find("span", class_="debt-ratio").text.strip()) if soup.find("span", class_="debt-ratio") else np.nan,
+            "DividendYield": float(soup.find("span", class_="dividend-yield").text.strip()) if soup.find("span", class_="dividend-yield") else np.nan,
+            "FutureReturn": float(soup.find("span", class_="future-return").text.strip()) if soup.find("span", class_="future-return") else np.nan
+        }
+    except Exception as e:
+        print(f"Error parsing data for {stock_code}: {e}")
+        return None
     return data
 
 # Grabing data of all stocks mentioned
@@ -43,7 +46,8 @@ stock_data = [get_stock_data(code) for code in stock_list]
 
 # Delete the data with problems
 stock_data = [data for data in stock_data if data is not None]
-
+if not stock_data:
+   raise ValueError("No valid stock data fetched. Exiting.")
 data = pd.DataFrame(stock_data)
 
 ## 2. Data Preprocessing
@@ -53,6 +57,10 @@ if all(feature in data.columns for feature in features) and 'FutureReturn' in da
    y = data['FutureReturn']
 else:
    raise ValueError("Missing necessary columns in data")
+
+# Handling missing values (using mean imputation) 
+X.fillna(X.mean(), inplace=True)
+
 # Standardization
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
@@ -65,7 +73,11 @@ print("Filtrating the crucial factors:", selected_features)
 ## 4. Calculating the factors' scores and perform group backtesting
 factor_scores = X_scaled @ lasso.coef_
 data['FactorScore'] = factor_scores
-data['Group'] = pd.qcut(data['FactorScore'], 3, labels=['Low', 'Medium', 'High'])
+if data['FactorScore'].nunique() > 1:
+    data['Group'] = pd.qcut(data['FactorScore'], 3, labels=['Low', 'Medium', 'High'])
+else:
+    data['Group'] = 'Medium'
+
 mean_returns = data.groupby('Group')['FutureReturn'].mean()
 
 ## 5. Visualization
